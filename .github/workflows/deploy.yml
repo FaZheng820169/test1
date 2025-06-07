@@ -3,26 +3,43 @@ name: Deploy to Server
 on:
   push:
     branches:
-      - main  # 或你想监听的分支
+      - master  # 或者你监控的其他分支
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # Check out the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+      # Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
 
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Add server to known_hosts
       - name: Add server to known_hosts
         run: |
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
 
-      - name: Deploy files to server
+      # Deploy files to server
+      - name: Update apt
+        run: sudo apt update
+
+      - name: Install lsb-release
+        run: sudo apt install -y lsb-release
+
+      - name: Deploy to Server
         run: |
-          scp -r ./dist ${{ secrets.REMOTE_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.REMOTE_PATH }}
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          scp -i private_key.pem -r ./dist ${{ secrets.REMOTE_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.REMOTE_PATH }}
