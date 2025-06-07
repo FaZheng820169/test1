@@ -1,25 +1,28 @@
-name: Deploy to Server
+name: 自动部署到云服务器
 
 on:
   push:
     branches:
-      - main  # 或 master，根据你主分支的名称
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: 拉取仓库代码
+        uses: actions/checkout@v3
 
-    - name: Deploy to Server via SSH
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SERVER_IP }}
-        username: ${{ secrets.SERVER_USER }}
-        key: ${{ secrets.SERVER_SSH_KEY }}
-        script: |
-          cd /var/www/训练1
-          git pull
-          sudo systemctl restart uwsgi
+      - name: 设置 SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: 部署到云服务器
+        run: |
+          ssh -o StrictHostKeyChecking=no root@118.31.33.58 << 'EOF'
+            cd /var/www/训练1
+            git pull
+            systemctl restart uwsgi
+            systemctl restart nginx
+          EOF
