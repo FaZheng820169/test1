@@ -3,35 +3,30 @@ name: Deploy to Server
 on:
   push:
     branches:
-      - master  # 或者你监控的其他分支
+      - master
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Check out the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up Python
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
-      # Install dependencies
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
-      # Add server to known_hosts
+      - name: Create .ssh folder
+        run: mkdir -p ~/.ssh
+
       - name: Add server to known_hosts
-        run: |
-          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+        run: ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
 
-      # Deploy files to server
       - name: Update apt
         run: sudo apt update
 
@@ -39,7 +34,11 @@ jobs:
         run: sudo apt install -y lsb-release
 
       - name: Deploy to Server
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
-          scp -i private_key.pem -r ./dist ${{ secrets.REMOTE_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.REMOTE_PATH }}
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.REMOTE_KEY }}
+          port: ${{ secrets.REMOTE_PORT }}
+          source: "."
+          target: ${{ secrets.REMOTE_PATH }}
