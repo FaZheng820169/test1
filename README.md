@@ -60,3 +60,5 @@ python app.py
 - 确保运行应用前已安装所有依赖
 - 数据库文件 (tasks.db) 会在首次运行时自动创建
 - 如果需要部署到生产环境，请参考 deploy.py 和 nginx_flask_config.conf
+
+自动部署测试：2025-06-08 00:13
