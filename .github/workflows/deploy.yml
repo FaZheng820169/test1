@@ -1,27 +1,28 @@
-name: Deploy to Cloud Server
+name: Deploy to Server
 
 on:
   push:
     branches:
-      - main  # 或 master，看你主分支是哪一个
+      - main  # 或你想监听的分支
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Setup SSH
-      uses: webfactory/ssh-agent@v0.7.0
-      with:
-        ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-    - name: Deploy to Server
-      run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-          cd /var/www/训练1
-          git pull origin main
-          sudo systemctl restart uwsgi
-        EOF
+      - name: Add server to known_hosts
+        run: |
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy files to server
+        run: |
+          scp -r ./dist ${{ secrets.REMOTE_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.REMOTE_PATH }}
