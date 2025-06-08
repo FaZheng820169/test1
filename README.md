@@ -62,3 +62,4 @@ python app.py
 - 如果需要部署到生产环境，请参考 deploy.py 和 nginx_flask_config.conf
 
 自动部署测试：2025-06-08 00:13
+<!-- 触发 GitHub Actions -->
